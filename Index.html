@@ -17,7 +17,7 @@
         }
         body { font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif; background: var(--primary-bg); display: flex; flex-direction: column; align-items: center; padding: 20px; margin: 0; min-height: 100vh; color: var(--text-dark); }
         
-        /* 頂部紀錄面板 */
+        /* 紀錄面板 */
         .record-panel {
             width: 100%; max-width: 600px; background: var(--panel-bg); color: white;
             padding: 15px; border-radius: 12px; margin-bottom: 15px; display: flex;
@@ -31,7 +31,15 @@
         .container { 
             background: var(--card-bg); padding: 2.5rem; border-radius: 20px; 
             box-shadow: 0 15px 35px rgba(0,0,0,0.05); width: 100%; max-width: 500px; text-align: center; 
-            box-sizing: border-box; position: relative;
+            box-sizing: border-box; position: relative; overflow: hidden;
+        }
+
+        /* 💡 倒數計時進度條 */
+        .timer-bar-container {
+            position: absolute; top: 0; left: 0; width: 100%; height: 6px; background: #e2e8f0;
+        }
+        #timer-bar {
+            height: 100%; width: 100%; background: var(--success-green); transition: width 1s linear, background-color 0.3s;
         }
         
         .brand-title { font-size: 2rem; font-weight: 800; color: var(--text-dark); margin-bottom: 10px; }
@@ -47,7 +55,7 @@
         
         .input-group { display: flex; flex-direction: column; gap: 18px; margin-bottom: 2rem; text-align: left; }
         input[type="text"] { width: 100%; padding: 18px; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 1.2rem; box-sizing: border-box; text-align: center; outline: none; transition: all 0.2s; }
-        input[type="text"]:focus { border-color: var(--accent-blue); box-shadow: 0 0 0 4px rgba(52, 152, 219, 0.1); }
+        input[type="text"]:focus { border-color: var(--accent-blue); }
         input[type="text"]:disabled { background-color: #f1f5f9; color: #94a3b8; }
         
         button { width: 100%; padding: 18px; border: none; border-radius: 12px; font-size: 1.2rem; font-weight: bold; cursor: pointer; transition: all 0.2s; outline: none; }
@@ -55,7 +63,7 @@
         .btn-next { background: var(--success-green); color: white; display: none; margin-top: 10px; }
         .btn-start { background: var(--brand-color); color: white; }
 
-        .result-box { margin-top: 1.5rem; padding: 1.2rem; border-radius: 12px; display: none; text-align: left; line-height: 1.6; }
+        .result-box { margin-top: 1.5rem; padding: 1.2rem; border-radius: 12px; display: none; text-align: left; }
         .result-correct { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
         .result-wrong { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
         
@@ -63,31 +71,25 @@
         .btn-reset { background: none; border: 1px solid #cbd5e1; color: #94a3b8; padding: 8px 15px; width: auto; font-size: 0.8rem; margin-top: 20px; border-radius: 8px; cursor: pointer; }
         .btn-back { background: none; color: #64748b; font-size: 0.9rem; text-decoration: underline; margin-top: 15px; display: inline-block; cursor: pointer; border: none; }
 
-        /* 💡 自訂彈跳視窗樣式 */
+        /* 彈跳視窗 */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0, 0, 0, 0.7); display: flex; justify-content: center; align-items: center;
-            z-index: 1000; opacity: 0; visibility: hidden; transition: all 0.3s; backdrop-filter: blur(4px);
+            z-index: 1000; opacity: 0; visibility: hidden; transition: 0.3s; backdrop-filter: blur(4px);
         }
         .modal-overlay.active { opacity: 1; visibility: visible; }
         .modal-content {
-            background: white; padding: 50px 60px; border-radius: 30px;
-            text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.4);
-            transform: scale(0.7); transition: all 0.3s; max-width: 90%;
+            background: white; padding: 50px 60px; border-radius: 30px; text-align: center; max-width: 90%;
         }
-        .modal-overlay.active .modal-content { transform: scale(1); }
-        .encourage-text { font-size: 4.5rem; font-weight: 900; margin: 0; line-height: 1.1; }
-        .streak-info { font-size: 1.3rem; color: #64748b; margin-top: 20px; font-weight: bold; }
-        
-        /* 彈窗配色 */
+        .encourage-text { font-size: 4rem; font-weight: 900; margin: 0; line-height: 1.1; }
+        .streak-info { font-size: 1.2rem; color: #64748b; margin-top: 15px; }
         .color-streak-5 { color: #3498db; }
         .color-streak-10 { color: #27ae60; }
         .color-streak-15 { color: #9b59b6; }
-        .color-streak-20 { color: #f1c40f; text-shadow: 0 0 15px rgba(241, 196, 15, 0.3); }
+        .color-streak-20 { color: #f1c40f; }
         .color-gameover { color: #e74c3c; }
         .color-finish { color: #2ecc71; }
-
-        .modal-btn { background: var(--panel-bg); color: white; margin-top: 35px; width: auto; padding: 15px 40px; font-size: 1.1rem; }
+        .modal-btn { background: var(--panel-bg); color: white; margin-top: 30px; width: auto; padding: 12px 40px; }
     </style>
 </head>
 <body>
@@ -95,7 +97,7 @@
     <div class="modal-overlay" id="modal-overlay">
         <div class="modal-content">
             <p class="encourage-text" id="modal-text">不錯哦！</p>
-            <p class="streak-info" id="modal-streak-info">連續答對 5 題！</p>
+            <p class="streak-info" id="modal-streak-info">---</p>
             <button class="modal-btn" onclick="closeModal()">繼續 (Enter)</button>
         </div>
     </div>
@@ -108,12 +110,16 @@
     </div>
 
     <div class="container">
+        <div class="timer-bar-container" id="timer-container" style="display:none;">
+            <div id="timer-bar"></div>
+        </div>
+
         <div id="loading-view">🔄 同步博愛藥譜中...</div>
 
         <div id="category-view" style="display:none;">
             <div class="brand-title">羅東博愛醫院</div>
-            <h2 style="color: var(--brand-color); margin-top: 0;">單元挑戰模式</h2>
-            <p style="color:#64748b;">答錯即結束，挑戰最高 20 題！</p>
+            <h2 style="color: var(--brand-color); margin-top: 0;">限時極限挑戰</h2>
+            <p style="color:#64748b;">每題 30 秒，挑戰醫囑直覺反應！</p>
             <select id="category-select">
                 <option value="ALL">--- 全部單元 ---</option>
             </select>
@@ -136,7 +142,7 @@
             <button id="btn-next" class="btn-next" onclick="handleNext()">下一題 (Enter)</button>
             
             <div id="result-box" class="result-box"></div>
-            <button class="btn-back" onclick="backToMenu()">放棄挑戰返回選單</button>
+            <button class="btn-back" onclick="backToMenu()">放棄挑戰</button>
         </div>
 
         <button class="btn-reset" onclick="resetUserRecords()">重置個人紀錄</button>
@@ -148,6 +154,7 @@
 
     let allDrugData = [], filteredData = [], currentDrug = {}, answerKey = "";
     let gameIndex = 0, maxQuizCount = 20, isModalOpen = false;
+    let timerInterval = null, timeLeft = 30;
 
     let rawData = JSON.parse(localStorage.getItem('pharmacist_records')) || {};
     let userStats = {
@@ -187,8 +194,43 @@
             document.getElementById('sync-status').innerText = `✅ 題庫同步成功 (${allDrugData.length} 筆)`;
             updateRecordDisplay();
         } catch (e) {
-            document.getElementById('sync-status').innerText = "❌ 載入失敗，請檢查網路。";
+            document.getElementById('sync-status').innerText = "❌ 載入失敗。";
         }
+    }
+
+    // 💡 計時器邏輯
+    function startTimer() {
+        clearInterval(timerInterval);
+        timeLeft = 30;
+        const bar = document.getElementById('timer-bar');
+        bar.style.width = '100%';
+        bar.style.backgroundColor = 'var(--success-green)';
+        
+        timerInterval = setInterval(() => {
+            timeLeft--;
+            const percentage = (timeLeft / 30) * 100;
+            bar.style.width = percentage + '%';
+            
+            if (timeLeft <= 10) bar.style.backgroundColor = 'var(--error-red)';
+            
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                handleTimeout();
+            }
+        }, 1000);
+    }
+
+    function handleTimeout() {
+        showModal("時間到！", `太慢囉！在第 ${gameIndex + 1} 題挑戰失敗。`, "gameover");
+        revealAnswer();
+    }
+
+    function revealAnswer() {
+        document.getElementById('result-box').className = "result-box result-wrong";
+        document.getElementById('result-box').innerHTML = `❌ <strong>逾時或答錯！</strong><br>正確答案：<b>${currentDrug[answerKey]}</b>`;
+        document.getElementById('result-box').style.display = "block";
+        document.getElementById('btn-check').style.display = "none";
+        document.querySelectorAll('.answer-input').forEach(i => i.disabled = true);
     }
 
     function shuffle(array) {
@@ -201,6 +243,7 @@
 
     function showModal(text, subText, type) {
         isModalOpen = true;
+        clearInterval(timerInterval);
         const overlay = document.getElementById('modal-overlay');
         const textEl = document.getElementById('modal-text');
         const infoEl = document.getElementById('modal-streak-info');
@@ -238,6 +281,7 @@
 
         document.getElementById('category-view').style.display = 'none';
         document.getElementById('quiz-view').style.display = 'block';
+        document.getElementById('timer-container').style.display = 'block';
         handleNext();
     }
 
@@ -262,13 +306,16 @@
         parts.forEach((_, i) => {
             const input = document.createElement('input');
             input.type = "text"; input.className = "answer-input";
-            input.placeholder = `請輸入${answerKey === 'ge' ? '學名' : '商品名'} ${parts.length > 1 ? (i+1) : ''}`;
+            input.placeholder = `請輸入${answerKey === 'ge' ? '學名' : '商品名'}`;
             container.appendChild(input);
         });
         if (container.querySelector('input')) container.querySelector('input').focus();
+        
+        startTimer(); // 💡 換題後啟動計時
     }
 
     function handleCheck() {
+        clearInterval(timerInterval); // 💡 提交後停止計時
         const inputs = document.querySelectorAll('.answer-input');
         const userAns = Array.from(inputs).map(i => i.value.trim().toLowerCase());
         const correctAns = currentDrug[answerKey].toLowerCase().split(/[,，/／]/).map(s => s.trim()).filter(s => s !== "");
@@ -301,19 +348,17 @@
                 document.getElementById('btn-next').focus();
             }
         } else {
-            showModal("Game Over！", `很遺憾，在第 ${gameIndex + 1} 題失敗了。`, "gameover");
-            document.getElementById('result-box').className = "result-box result-wrong";
-            document.getElementById('result-box').innerHTML = `❌ <strong>答錯了！</strong><br>正確答案：<b>${currentDrug[answerKey]}</b>`;
-            document.getElementById('result-box').style.display = "block";
-            document.getElementById('btn-check').style.display = "none";
-            updateRecordDisplay();
+            showModal("Game Over！", `答錯了！在第 ${gameIndex + 1} 題挑戰失敗。`, "gameover");
+            revealAnswer();
         }
     }
 
     function backToMenu(force = false) {
         if(force || confirm("確定返回選單？")) {
+            clearInterval(timerInterval);
             document.getElementById('quiz-view').style.display = 'none';
             document.getElementById('category-view').style.display = 'block';
+            document.getElementById('timer-container').style.display = 'none';
             userStats.current_score = 0;
             userStats.current_streak = 0;
             updateRecordDisplay();
